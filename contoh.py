@@ -1,4 +1,5 @@
 import numpy as np
+from random import sample
 
 h = lambda x, y: ((np.cos(x) + np.sin(y))**2) / x**2 + y**2
 
@@ -16,7 +17,7 @@ def decode(kromosom, r_b, r_a):
     
     # return r_b + ((r_a - r_b) // sum(exp)) * g_exp
     # print(pembagi, pengali)
-    return r_b + ((r_a - r_b) // pembagi) * pengali
+    return r_b + ((r_a - r_b) / pembagi) * pengali
   
 def fitness(krom):
     # ganti krom[..] dengan perhitungan angka dlu
@@ -33,9 +34,9 @@ def fitness(krom):
     # y = decode(krom[N//2:], -5, 5)
     # print(y)
     #   print(x, y)
-    return 1/(h(x, y) + 1)
+    return 1 / (h(x, y) + 1)
 
-def Pfitness(krom):
+def print_x_y(krom):
     N = len(krom)
 
     # print(krom)
@@ -48,79 +49,110 @@ def Pfitness(krom):
     # x = decode(krom[:N//2], -5, 5)
     # y = decode(krom[N//2:], -5, 5)
     # print(y)
-    print(x, y)
+    print("x = {:.2f}\ny = {:.2f}".format(x, y))
 
-def sort_population(populasi):
-    # urutin populasi dari nilai fitness terbesar, 
+def sort_population(population):
+    # urutin population dari nilai fitness terbesar, 
     # pake aja sorting manual dengan bandinginnya masukin ke fitness baru ditukar
-    return sorted(populasi, key=lambda krom: fitness(krom))
+    return sorted(population, key=lambda krom: fitness(krom))
     # return pop.sort(key=lambda ch: fitness(ch))
 
 def tournament_selection(pop):
     best_parents = []
     # for i in range(2):
-    n = np.random.randint(len(pop))-1
-    indiv = pop[n]
-    if len(best_parents) == 0 or fitness(indiv) > fitness(max(best_parents)):
-        best_parents.append(indiv)
-    while len(best_parents) <= 2:
-        n = np.random.randint(len(pop))-1
-        indiv = pop[n]
-        if fitness(indiv) > fitness(max(best_parents)):
-            best_parents.append(indiv)
+    # n = np.random.randint(len(pop))-1
+    # print('a')
+    # indiv = pop[n]
+    # print('b')
+    # best_parents.append(indiv)
+    # while len(best_parents) < 2:
+    #     print('c')
+    #     n = np.random.randint(len(pop)-1)
+    #     print('d')
+    #     indiv = pop[n]
+    #     print('e')
+    #     if fitness(indiv) > fitness(max(best_parents)):
+    #         best_parents.append(indiv)
+    #         print('f')  
+
+    # best_parents = sample(pop, 4)
+    sort_pop = sort_population(pop)
+    best_parents.append(sort_pop[0])
+    best_parents.append(sort_pop[1])
+    best_parents.append(sort_pop[2])
+    best_parents.append(sort_pop[3])
+    # print(best_parents)
 
     return best_parents
 
-def persilangan(pop, probCross):
-    N = len(pop[0])
-    pop_cross = []
-    while len(pop_cross) < len(pop):
+def crossover(parents, Pc):
+    par_crossover = []
+    # print(parents)
+    while len(par_crossover) < len(parents):
         cross_prob = np.random.randint(0, 101)
-        i = len(pop_cross)
-        ch_new = pop[i].copy()
-        rand_i = np.random.randint(len(pop))
-        if cross_prob <= probCross and rand_i != i:
-            ch_rand = pop[rand_i].copy()
-            cross_idx = np.random.randint(len(ch_new))
-            # yg bawah kyknya cuma perlu 1 aja yg atas, soalnya ini bakal hasilnya cuma tuker tempat doang
-            ch_new[0:cross_idx], ch_rand[0:cross_idx] = ch_rand[0:cross_idx], ch_new[0:cross_idx]
-            # ch_new[cross_idx:N], ch_rand[cross_idx:N] = ch_rand[cross_idx:N], ch_new[cross_idx:N]
-        pop_cross.append(ch_new)
-    return pop_cross
+        i = len(par_crossover)
+        krom_new = parents[i].copy()
+        rndm_i = np.random.randint(len(parents))
+        if cross_prob <= Pc and rndm_i != i:
+            krom_rndm = parents[rndm_i].copy()
+            cross_cut_idx = np.random.randint(len(krom_new))
+            krom_new[0:cross_cut_idx], krom_rndm[0:cross_cut_idx] = krom_rndm[0:cross_cut_idx], krom_new[0:cross_cut_idx]
+            par_crossover.append(krom_new)
 
-def mutasi(pop, probMutasi):
-    pop_mutasi = []
-    N = len(pop[0])
-    for i in range(len(pop)):
+    
+    # print(par_crossover)
+    return par_crossover
+
+def mutation(child, Pm):
+    child_mutasi = []
+    for i in range(len(child)):
         prob_mutasi = np.random.randint(0, 101)
-        ch = pop[i].copy()
-        if prob_mutasi <= probMutasi:
-            rand_i = np.random.randint(len(pop))
-            ch[rand_i] = int(np.floor(np.random.random()))
-        pop_mutasi.append(ch)
-    return pop_mutasi
+        krom = child[i].copy()
+        if prob_mutasi <= Pm:
+            rand_idx = np.random.randint(len(child))
+            krom[rand_idx] = np.random.randint(0, 2)
+            child_mutasi.append(krom)
+    return child_mutasi
   
-def steady_state(pop, keturunan):
-    N = len(keturunan)
-    pop_worst = sort_population(pop)[N:]
+def steady_state_survivor(pop, child):
+    N = len(child)
+    pop_reversed = sort_population(pop)[N:]
     for i in range(N):
-        pop.remove(pop_worst[i])
-        pop.append(keturunan[i])
+        pop.remove(pop_reversed[i])
+        pop.append(child[i])
     return pop
 
-populasi = [[np.random.randint(2) for i in range(8)] for i in range(64)]
-for i in range(1):
-    fit = [fitness(pop) for pop in populasi]
-    OrangTua = tournament_selection(populasi)
-    Keturunan = persilangan(OrangTua, 25)
-    Keturunan = mutasi(Keturunan, 2)
-    populasi = steady_state(populasi, Keturunan)
-    print("-"*10,"Generasi",i+1,"-"*10)
-    print(populasi)
+# population = [[np.random.randint(2) for i in range(8)] for i in range(8)]
+population = []
+for i in range(16):
+    temp = []
+    for j in range(8):
+        temp.append(np.random.randint(0, 2))
+    population.append(temp)
 
-best = sorted(populasi, key=fitness)[-1]
-print('Kromosom terbaik =', best, 'dengan nilai fitness sebesar', fitness(best))
-Pfitness(best)
-# N = len(best)
-# print(decode(best[:N//2], -5, 5))
-# print(decode(best[N//2], -5, 5))
+# print(population)
+
+for i in range(320):
+    # fit = [fitness(pop) for pop in population]
+    list_fitness = []
+    for j in population:
+        list_fitness.append(fitness(j))
+    print("1")
+    random_par = sample(population, 8)
+    parents = tournament_selection(random_par)
+    print("2")
+    childs = crossover(parents, 25)
+    print("3")
+    childs = mutation(childs, 2)
+    print("4")
+    population = steady_state_survivor(population, childs)
+    print("5")
+    print(f"Gen-{i+1}")
+    # print(population)
+    for k in range(len(population)//2):
+        print(population[k], population[k+1])
+
+best = sorted(population, key=fitness)[-1]
+print("Kromosom terbaik =", best)
+print("Fitness =", fitness(best))
+print_x_y(best)
