@@ -124,21 +124,19 @@ for i in range(16):
 
 '''Looping tiap generasi'''
 for i in range(320):
-    list_fitness = []
-    for j in population:
-        list_fitness.append(fitness(j))
     random_par = sample(population, 8)
     parents = tournament_selection(random_par)
     childs = crossover(parents, 25)
     childs = mutation(childs, 2)
     population = steady_state_survivor(population, childs)
-    print(f"Gen-{i+1}")
+    print(f"\nGen-{i+1}")
     # print(population)
-    for k in range(len(population)//2):
+    for k in range(0, len(population), 2):
         print(population[k], population[k+1])
 
 '''hasil'''
-best = sorted(population, key=fitness)[-1]
-print("Kromosom terbaik =", best)
-print("Fitness =", fitness(best))
-print_x_y(best)
+best = sort_population_b_to_w(population)
+print("="*50)
+print("Kromosom terbaik =", best[0])
+print("Fitness =", fitness(best[0]))
+print_x_y(best[0])
